@@ -87,9 +87,8 @@ RUN set -eux; \
 	ln -fs /usr/share/zoneinfo/Asia/Shanghai /etc/localtime; \
 	dpkg-reconfigure -f noninteractive tzdata; \
 	\
-# 设置临时目录的权限信息，设置为777是为了保证后续使用`--user`或`gosu`时，可以更改目录对应的用户属性信息
+# 设置临时目录的权限信息，设置为777是为了保证后续使用`--user`或`gosu`时，可以更改目录对应的用户属性信息；运行时会被更改为700或755
 	chown -Rf ${APP_USER}:${APP_GROUP} ${APP_DEF_DIR} ${APP_CONF_DIR} ${APP_DATA_DIR} ${APP_CACHE_DIR} ${APP_LOG_DIR} ${APP_RUN_DIR}; \
-# this 777 will be replaced by 700 or 755 at runtime (allows semi-arbitrary "--user" values)
 	chmod 777 ${APP_DEF_DIR} ${APP_CONF_DIR} ${APP_DATA_DIR} ${APP_CACHE_DIR} ${APP_LOG_DIR} ${APP_RUN_DIR}; \
 	\
 # 查找新安装的应用相应的依赖软件包，并表示为'manual'，防止后续自动清理时被删除
