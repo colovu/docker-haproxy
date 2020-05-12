@@ -1,4 +1,4 @@
-FROM endial/ubuntu:18.04
+FROM colovu/ubuntu:18.04
 
 ARG app_major=2.0
 ARG app_minor=2.0.14
@@ -21,7 +21,7 @@ ENV APP_NAME=haproxy \
 LABEL \
 	"Version"="v${APP_MAJOR}" \
 	"Description"="Docker image for ${APP_NAME} ${APP_MAJOR} based on Ubuntu 18.04." \
-	"Dockerfile"="https://github.com/endial/docker-${APP_NAME}" \
+	"Dockerfile"="https://github.com/colovu/docker-${APP_NAME}" \
 	"Vendor"="Endial Fang (endial@126.com)"
 
 RUN set -eux; \

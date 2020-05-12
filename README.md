@@ -4,12 +4,12 @@
 
 **版本信息**：
 
-- 2.0.14，latest
+- 2.0、2.0.14、latest
 
 **镜像信息**
 
-* 镜像地址：endial/haproxy:latest
-  * 依赖镜像：endial/ubuntu:18.04
+* 镜像地址：colovu/haproxy:latest
+  * 依赖镜像：colovu/ubuntu:latest
 
 
 
@@ -86,10 +86,10 @@ $ docker network create app-tier --driver bridge
 
 ```shell
 # 下载指定Tag的镜像
-$ docker pull endial/haproxy:tag
+$ docker pull colovu/haproxy:tag
 
 # 下载最新镜像
-$ docker pull endial/haproxy:latest
+$ docker pull colovu/haproxy:latest
 ```
 
 
@@ -101,7 +101,7 @@ $ docker pull endial/haproxy:latest
 ```shell
  docker run -d --name haproxy \
   -v /host/dir/to/conf:/srv/conf \
-  endial/haproxy:latest
+  colovu/haproxy:latest
 ```
 
 如果存在 dvc（endial/dvc-alpine） 数据卷容器：
@@ -109,7 +109,7 @@ $ docker pull endial/haproxy:latest
 ```shell
 docker run -d --name haproxy \
   --volumes-from dvc \
-  endial/haproxy:latest
+  colovu/haproxy:latest
 ```
 
 
@@ -143,4 +143,4 @@ docker stop haproxy
 
 ----
 
-本文原始来源 [Endial Fang](https://github.com/endial) @ [Github.com](https://github.com)
+本文原始来源 [Endial Fang](https://github.com/colovu) @ [Github.com](https://github.com)
