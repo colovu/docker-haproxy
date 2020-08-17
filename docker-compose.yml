@@ -1,0 +1,37 @@
+version: '3.6'
+
+# Docker-Compose 单容器使用参考 YAML 配置文件
+# 更多配置参数请参考镜像 README.md 文档中说明
+services:
+  haproxy:
+    image: 'colovu/haproxy:latest'
+    networks: 
+      - back-tier
+    ports:
+      - 80:8080
+      - 8888:8888
+    volumes:
+      - /tmp/conf:/srv/conf
+    environment:
+      - HAPROXY_ADMIN_PORT=8888
+
+  www1:
+    image: 'colovu/nginx:latest'
+    networks: 
+      - back-tier
+
+  www2:
+    image: 'colovu/nginx:latest'
+    networks: 
+      - back-tier
+
+  www3:
+    image: 'colovu/nginx:latest'
+    networks: 
+      - back-tier
+
+networks:
+  back-tier:
+    ipam:
+      config:
+        - subnet: 172.50.0.0/16
