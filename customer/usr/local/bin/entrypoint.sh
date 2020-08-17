@@ -79,7 +79,7 @@ _main() {
 
 			# 解决使用gosu后，nginx: [emerg] open() "/dev/stdout" failed (13: Permission denied)
 			LOG_D "Change permissions of stdout/stderr to 0622"
-			chmod 0622 /dev/stdout /dev/stderr
+			chmod 0662 /dev/stdout /dev/stderr
 
 			LOG_I ""
 			LOG_I "Restart container with default user: ${APP_NAME}"

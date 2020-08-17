@@ -81,15 +81,15 @@ haproxy_conf_set() {
 }
 
 haproxy_conf_generate_frontend(){
-
+    :
 }
 
 haproxy_conf_generate_backend_static(){
-
+    :
 }
 
 haproxy_conf_generate_backend_app(){
-
+    :
 }
 
 # 生成默认配置文件
@@ -99,7 +99,7 @@ haproxy_generate_conf() {
     # 根据容器参数，设置配置文件
     haproxy_conf_set "{{HAPROXY_GLOBAL_STATS_PORT}}" "${HAPROXY_GLOBAL_STATS_PORT}"
 
-    haproxy_conf_set "{{HAPROXY_DEFAULT_BACKEND}}" "${HAPROXY_DEFAULT_BACKEND}"
+    haproxy_conf_set "{{HAPROXY_FRONT_DEFAULT_BACKEND}}" "${HAPROXY_FRONT_DEFAULT_BACKEND}"
 
     haproxy_conf_set "{{HAPROXY_ADMIN_PORT}}" "${HAPROXY_ADMIN_PORT}"
     haproxy_conf_set "{{HAPROXY_ADMIN_STATS_URI}}" "${HAPROXY_ADMIN_STATS_URI}"
