@@ -27,8 +27,16 @@ docker_app_env() {
 export ENV_DEBUG=${ENV_DEBUG:-false}
 
 # Paths
+export APP_CONF_FILE=${APP_CONF_DIR}/haproxy.cfg
 
 # Application settings
+export HAPROXY_GLOBAL_STATS_PORT=${HAPROXY_GLOBAL_STATS_PORT:-14567}
+export HAPROXY_ADMIN_PORT=${HAPROXY_ADMIN_PORT:-8888}
+export HAPROXY_ADMIN_STATS_URI=${HAPROXY_ADMIN_STATS_URI:-haproxy}
+export HAPROXY_ADMIN_USER=${HAPROXY_ADMIN_USER:-admin}
+export HAPROXY_ADMIN_PASS=${HAPROXY_ADMIN_PASS:-colovu}
+
+export HAPROXY_FRONT_DEFAULT_BACKEND=${HAPROXY_FRONT_DEFAULT_BACKEND:-app}
 
 # Application Cluster configuration
 
@@ -41,128 +49,80 @@ export ENV_DEBUG=${ENV_DEBUG:-false}
 EOF
 
     # 利用 *_FILE 设置密码，不在配置命令中设置密码，增强安全性
-#    if [[ -f "${ZOO_CLIENT_PASSWORD_FILE:-}" ]]; then
+#    if [[ -f "${HAPROXY_CLIENT_PASSWORD_FILE:-}" ]]; then
 #        cat <<"EOF"
-#export ZOO_CLIENT_PASSWORD="$(< "${ZOO_CLIENT_PASSWORD_FILE}")"
+#export HAPROXY_CLIENT_PASSWORD="$(< "${HAPROXY_CLIENT_PASSWORD_FILE}")"
 #EOF
 #    fi
 }
 
-# 使用环境变量中以 "ZOO_CFG_" 开头的的全局变量更新配置文件中对应项（全小写，以"."分隔）
+# 使用环境变量中以 "HAPROXY_CFG_" 开头的的全局变量更新配置文件中对应项（全小写，以"."分隔）
 # 全局变量:
-#   ZOO_CFG_*
+#   HAPROXY_CFG_*
 # 举例：
-#   ZOO_CFG_LOG_DIRS 对应配置文件中的配置项：log.dirs
+#   HAPROXY_CFG_LOG_DIRS 对应配置文件中的配置项：log.dirs
 app_configure_from_environment_variables() {
     # Map environment variables to config properties
-    for var in "${!ZOO_CFG_@}"; do
-        key="$(echo "$var" | sed -e 's/^ZOO_CFG_//g' -e 's/_/\./g' | tr '[:upper:]' '[:lower:]')"
+    for var in "${!HAPROXY_CFG_@}"; do
+        key="$(echo "$var" | sed -e 's/^HAPROXY_CFG_//g' -e 's/_/\./g' | tr '[:upper:]' '[:lower:]')"
         value="${!var}"
         zoo_conf_set "$key" "$value"
     done
 }
 
-# 将变量配置更新至配置文件
-# 参数:
-#   $1 - 文件
-#   $2 - 变量
-#   $3 - 值（列表）
-zoo_common_conf_set() {
-    local file="${1:?missing file}"
-    local key="${2:?missing key}"
-    shift
-    shift
-    local values=("$@")
-
-    if [[ "${#values[@]}" -eq 0 ]]; then
-        LOG_E "missing value"
-        return 1
-    elif [[ "${#values[@]}" -ne 1 ]]; then
-        for i in "${!values[@]}"; do
-            zoo_common_conf_set "$file" "${key[$i]}" "${values[$i]}"
-        done
-    else
-        value="${values[0]}"
-        # Check if the value was set before
-        if grep -q "^[#\\s]*$key\s*=.*" "$file"; then
-            # Update the existing key
-            replace_in_file "$file" "^[#\\s]*${key}\s*=.*" "${key}=${value}" false
-        else
-            # 增加一个新的配置项；如果在其他位置有类似操作，需要注意换行
-            printf "%s=%s" "$key" "$value" >>"$file"
-        fi
-    fi
-}
-
-# 更新 server.properties 配置文件中指定变量值
+# 更新 haproxy.cfg 配置文件中指定变量值
 # 全局变量:
 #   APP_CONF_DIR
 # 变量:
 #   $1 - 变量
 #   $2 - 值（列表）
-zoo_conf_set() {
-    zoo_common_conf_set "$APP_CONF_DIR/zoo.cfg" "$@"
+haproxy_conf_set() {
+    replace_in_file "${APP_CONF_FILE}" "$1" "$2" false
 }
 
-# 更新 log4j.properties 配置文件中指定变量值
-# 全局变量:
-#   APP_CONF_DIR
-# 变量:
-#   $1 - 变量
-#   $2 - 值（列表）
-zoo_log4j_set() {
-    zoo_common_conf_set "$APP_CONF_DIR/log4j.properties" "$@"
+haproxy_conf_generate_frontend(){
+
+}
+
+haproxy_conf_generate_backend_static(){
+
+}
+
+haproxy_conf_generate_backend_app(){
+
 }
 
 # 生成默认配置文件
 # 全局变量:
-#   ZOO_*
-zoo_generate_conf() {
-    # 准备原始默认配置文件或生成空文件
-    cp "${APP_CONF_DIR}/zoo_sample.cfg" "$APP_CONF_FILE"
-    
-    echo "">> "$APP_CONF_FILE"
-
+#   HAPROXY_*
+haproxy_generate_conf() {
     # 根据容器参数，设置配置文件
-    zoo_log4j_set "zookeeper.console.threshold" "$ZOO_LOG_LEVEL"
-    zoo_log4j_set "zookeeper.log.dir" "${APP_LOG_DIR}"
-}
+    haproxy_conf_set "{{HAPROXY_GLOBAL_STATS_PORT}}" "${HAPROXY_GLOBAL_STATS_PORT}"
 
-# 设置环境变量 JVMFLAGS
-# 全局变量:
-#   JVMFLAGS
-# 参数:
-#   $1 - value
-zoo_export_jvmflags() {
-    local -r value="${1:?value is required}"
+    haproxy_conf_set "{{HAPROXY_DEFAULT_BACKEND}}" "${HAPROXY_DEFAULT_BACKEND}"
 
-    export JVMFLAGS="${JVMFLAGS} ${value}"
-    echo "export JVMFLAGS=\"${JVMFLAGS}\"" > "${APP_CONF_DIR}/java.env"
-}
+    haproxy_conf_set "{{HAPROXY_ADMIN_PORT}}" "${HAPROXY_ADMIN_PORT}"
+    haproxy_conf_set "{{HAPROXY_ADMIN_STATS_URI}}" "${HAPROXY_ADMIN_STATS_URI}"
+    haproxy_conf_set "{{HAPROXY_ADMIN_USER}}" "${HAPROXY_ADMIN_USER}"
+    haproxy_conf_set "{{HAPROXY_ADMIN_PASS}}" "${HAPROXY_ADMIN_PASS}"
 
-# 配置 HEAP 大小
-# 全局变量:
-#   JVMFLAGS
-# 参数:
-#   $1 - HEAP 大小
-zoo_configure_heap_size() {
-    local -r heap_size="${1:?heap_size is required}"
+    
 
-    if [[ "$JVMFLAGS" =~ -Xm[xs].*-Xm[xs] ]]; then
-        LOG_D "Using specified values (JVMFLAGS=${JVMFLAGS})"
-    else
-        LOG_D "Setting '-Xmx${heap_size}m -Xms${heap_size}m' heap options..."
-        zoo_export_jvmflags "-Xmx${heap_size}m -Xms${heap_size}m"
-    fi
+#    read -r -a keepalived_vip_list <<< "$(echo ${KEEPALIVED_VIPS//[;, ]/ } | sed -e 's/^\"//g' -e 's/\"$//g')"
+#        for server in "${keepalived_vip_list[@]}"; do
+#            LOG_I "Adding VIP: ${server}"
+#            haproxy_conf_set "{{KEEPALIVED_VIPS}}" "${server}\n    {{KEEPALIVED_VIPS}}"
+#        done
+#        remove_in_file "${APP_CONF_FILE}" "KEEPALIVED_VIPS" true
 }
 
 # 检测用户参数信息是否满足条件; 针对部分权限过于开放情况，打印提示信息
 # 全局变量：
-#   ZOO_*
+#   HAPROXY_*
 app_verify_minimum_env() {
     local error_code=0
 
-    LOG_D "Validating settings in ZOO_* env vars..."
+    LOG_D "Validating settings in HAPROXY_* env vars..."
 
     print_validation_error() {
         LOG_E "$1"
@@ -172,8 +132,8 @@ app_verify_minimum_env() {
     # 检测认证设置。如果不允许匿名登录，检测登录用户名及密码是否设置
 #    if is_boolean_yes "$ALLOW_ANONYMOUS_LOGIN"; then
 #        LOG_W "You have set the environment variable ALLOW_ANONYMOUS_LOGIN=${ALLOW_ANONYMOUS_LOGIN}. For safety reasons, do not use this flag in a production environment."
-#    elif ! is_boolean_yes "$ZOO_ENABLE_AUTH"; then
-#        print_validation_error "The ZOO_ENABLE_AUTH environment variable does not configure authentication. Set the environment variable ALLOW_ANONYMOUS_LOGIN=yes to allow unauthenticated users to connect to ZooKeeper."
+#    elif ! is_boolean_yes "$HAPROXY_ENABLE_AUTH"; then
+#        print_validation_error "The HAPROXY_ENABLE_AUTH environment variable does not configure authentication. Set the environment variable ALLOW_ANONYMOUS_LOGIN=yes to allow unauthenticated users to connect to ZooKeeper."
 #    fi
 
     # TODO: 其他参数检测
@@ -230,7 +190,7 @@ app_wait_service() {
 
 # 以后台方式启动应用服务，并等待启动就绪
 # 全局变量:
-#   ZOO_*
+#   HAPROXY_*
 app_start_server_bg() {
     is_app_server_running && return
     LOG_I "Starting ${APP_NAME} in background..."
@@ -252,7 +212,7 @@ app_start_server_bg() {
 
 	# 通过命令或特定端口检测应用是否就绪
     LOG_I "Checking ${APP_NAME} ready status..."
-    # wait-for-port --timeout 60 "$ZOO_PORT_NUMBER"
+    # wait-for-port --timeout 60 "$HAPROXY_PORT_NUMBER"
 
     LOG_D "${APP_NAME} is ready for service..."
 }
@@ -288,7 +248,7 @@ app_stop_server() {
 
 # 检测应用服务是否在后台运行中
 # 全局变量:
-#   ZOO_*
+#   HAPROXY_*
 # 返回值:
 #   布尔值
 is_app_server_running() {
@@ -336,7 +296,7 @@ docker_app_init() {
     if [[ ! -f "${APP_CONF_DIR}/.app_init_flag" ]]; then
         LOG_I "No injected configuration file found, creating default config files..."
         
-        # TODO: 生成配置文件，并按照容器运行参数进行相应修改
+        haproxy_generate_conf
 
         touch ${APP_CONF_DIR}/.app_init_flag
         echo "$(date '+%Y-%m-%d %H:%M:%S') : Init success." >> ${APP_CONF_DIR}/.app_init_flag
