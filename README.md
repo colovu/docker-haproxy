@@ -8,17 +8,17 @@
 
 
 
-**版本信息**：
+**版本信息：**
 
 - 2.0、latest
 
-**镜像信息**
+**镜像信息：**
 
-* 镜像地址：colovu/haproxy:latest
+* 镜像地址：colovu/haproxy
 
 
 
-## **TL;DR**
+## TL;DR
 
 Docker 快速启动命令：
 
@@ -29,7 +29,7 @@ $ docker run -d --name www2 colovu/nginx:latest
 $ docker run -d --name www3 colovu/nginx:latest
 
 # 启动 Haproxy 代理
-$ docker run -d --name haproxy colovu/haproxy:latest
+$ docker run -d --name haproxy colovu/haproxy
 ```
 
 Docker-Compose 快速启动命令：
@@ -128,7 +128,7 @@ $ docker run -d -e "HAPROXY_ADMIN_PORT=8888" --name haproxy colovu/haproxy:lates
 
 ## 更新记录
 
-- 2.0、2.0.14、latest
+- 2.0、latest
 
 
 
